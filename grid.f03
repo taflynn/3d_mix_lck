@@ -1,5 +1,8 @@
 !> \\file grid.f03
 module grid
+  
+  use FFTW3
+
   implicit none
   
   double precision :: pi = 4*atan(1.0)
@@ -70,10 +73,10 @@ module grid
     integer :: Nx, Ny, Nz
     integer :: i, j, k
 
-    double precision :: dt
+    double complex :: dt
 
     double precision :: kx(:), ky(:), kz(:)
-    double precision, allocatable :: dk2(:,:,:)
+    complex(C_DOUBLE_COMPLEX), allocatable :: dk2(:,:,:)
 
     Nx = size(kx)
     Ny = size(ky)

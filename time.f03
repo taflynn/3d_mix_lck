@@ -9,24 +9,21 @@ module time
   contains
 
   ! main ssfm time-stepping function
-  subroutine ssfm(psi,dk2,T_STEPS,dt,dx,dy,dz,Nlck,IM_REAL)
+  subroutine ssfm(psi,dk2,t_steps,t_save,dt,dx,dy,dz,Nlck,mu,im_real)
     implicit none
 
-    integer, intent(in) :: T_STEPS, IM_REAL
-
+    integer, intent(in) :: t_steps, t_save, im_real
     double precision, intent(in) :: dx, dy, dz
-    double precision, intent(inout) :: dt
+    double complex, intent(in) :: dt
     double precision, intent(in) :: Nlck
-
-    double precision, intent(in) :: dk2(:,:,:)
+    complex(C_DOUBLE_COMPLEX), intent(in) :: dk2(:,:,:)
     
     complex(C_DOUBLE_COMPLEX), intent(inout) :: psi(:,:,:)
-   
-    ! local variables 
-    integer :: i, j, k, l
-    integer :: Nx, Ny, Nz, Nxyz
+    double precision, intent(inout) :: mu
 
-    double precision :: mu
+    ! local variables 
+    integer :: l
+    integer :: Nx, Ny, Nz, Nxyz
 
     type(C_PTR) :: plan_forw, plan_back
     
@@ -49,41 +46,37 @@ module time
 
     plan_forw = fftw_plan_dft_3d(Nz,Ny,Nx,psi,psi_k,FFTW_FORWARD,FFTW_ESTIMATE)
     plan_back = fftw_plan_dft_3d(Nz,Ny,Nx,psi_k,psi,FFTW_BACKWARD,FFTW_ESTIMATE)
-    mu = -1.0
-
-    if (IM_REAL == 1) then
-      dt = cmplx(dt)
-      dt = complex(0.0,1.0)*dt
-    end if
-    do l = 1, T_STEPS
+    
+    do l = 1, t_steps
 
       ! first half-step
       call V_rhs(psi,mu,dt,Nx,Ny,Nz)
       
       ! FFT wavefunction to momentum space
       call fftw_execute_dft(plan_forw,psi,psi_k)
+      psi_k = psi_k/sqrt(dble(Nxyz))
       
       ! kinetic energy step
       call T_rhs(psi_k,dk2,Nx,Ny,Nz)
       
       ! IFFT wavefunction to real space
       call fftw_execute_dft(plan_back,psi_k,psi)
-      psi = psi/dble(Nxyz)
+      psi = psi/sqrt(dble(Nxyz))
 
       ! second half-step
       call V_rhs(psi,mu,dt,Nx,Ny,Nz)
 
       ! renormalise wavefunction
-      if (IM_REAL == 0) then
-        call renorm(psi,dx,dy,dz,Nlck,Nx,Ny,Nz)
-        if (mod(l,T_STEPS/10) == 0) then
+      if (im_real == 0) then
+        call renorm(psi,dx,dy,dz,Nlck)
+        if (mod(l,t_save) == 0) then
           ! FFT wavefunction to real space
           call fftw_execute_dft(plan_forw,psi,psi_k)
           psi_k = psi_k/sqrt(dble(Nxyz))
           mu = chem_pot(psi,psi_k,dk2,plan_back,Nx,Ny,Nz,dt)
         end if
       end if
-      if (mod(l,T_STEPS/10) == 0) then
+      if (mod(l,t_save) == 0) then
         write(*,*) "Percentage Completed"
         write(*,*) 100*(dble(l)/dble(T_STEPS))
         write(*,*) "Central Density"
@@ -95,11 +88,9 @@ module time
 
   end subroutine ssfm
 
-  subroutine renorm(psi,dx,dy,dz,Nlck,Nx,Ny,Nz)
+  subroutine renorm(psi,dx,dy,dz,Nlck)
     implicit none
-
-
-    integer, intent(in) :: Nx, Ny, Nz
+    
     double precision, intent(in) :: dx, dy, dz
     double precision, intent(in) :: Nlck
    
@@ -107,18 +98,9 @@ module time
 
     ! local variables
     double precision :: norm
-    integer :: i, j, k
     
     norm = sum(abs(psi)**2)*dx*dy*dz
-    !$omp parallel do collapse(3)
-    do k = 1, Nz
-      do j = 1, Ny
-        do i = 1, Nx
-          psi(i,j,k) = psi(i,j,k)*sqrt(Nlck/norm)
-        end do
-      end do
-    end do
-    !$omp end parallel do
+    psi = psi*sqrt(Nlck/norm)
 
   end subroutine renorm
 
@@ -129,7 +111,7 @@ module time
     
     integer, intent(in) :: Nx, Ny, Nz
     
-    double precision, intent(in) :: dk2(:,:,:)
+    double complex, intent(in) :: dk2(:,:,:)
 
     complex(C_DOUBLE_COMPLEX), intent(in) :: psi(:,:,:)
     complex(C_DOUBLE_COMPLEX) :: psi_k(:,:,:)
@@ -139,7 +121,7 @@ module time
     ! local variables
     integer :: i, j, k
    
-    double precision :: dt
+    double complex :: dt
 
     double precision, allocatable :: k2(:,:,:)
 

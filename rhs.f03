@@ -12,7 +12,8 @@ module rhs
     implicit none
     
     integer, intent(in) :: Nx, Ny, Nz
-    double precision, intent(in) :: mu, dt
+    double precision, intent(in) :: mu
+    double complex, intent(in) :: dt
 
     complex(C_DOUBLE_COMPLEX), intent(inout) :: psi(:,:,:)
 
@@ -35,7 +36,7 @@ module rhs
     implicit none
 
     integer, intent(in) :: Nx, Ny, Nz
-    double precision, intent(in) :: dk2(:,:,:)
+    complex(C_DOUBLE_COMPLEX), intent(in) :: dk2(:,:,:)
 
     complex(C_DOUBLE_COMPLEX), intent(inout) :: psi_k(:,:,:)
 

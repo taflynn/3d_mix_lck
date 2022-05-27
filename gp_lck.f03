@@ -1,6 +1,7 @@
 !> \\file gp_lck.f03
 program gp_lck
   use OMP_LIB
+  use json_module
   use FFTW3
   use grid
   use init
@@ -10,41 +11,63 @@ program gp_lck
 
   complex(C_DOUBLE_COMPLEX), allocatable :: psi(:,:,:)
 
-  integer :: T_STEPS = 10000
-  integer :: IM_REAL = 0
-
   integer :: Nx, Ny, Nz
   double precision :: dx, dy, dz 
-  double precision :: dt, dt_coef
+  double precision :: dt_coef
+  
+  integer :: im_t_steps, re_t_steps
+  integer :: im_t_save, re_t_save
 
-  double precision :: Nlck = 370.0
+  double precision :: Nlck
+
+  integer :: im_real
+  double complex :: dt
+  double precision :: mu
 
   double precision, allocatable :: x(:), y(:), z(:)
   double precision, allocatable :: kx(:), ky(:), kz(:)
 
-  double precision, allocatable :: dk2(:,:,:)
+  complex(C_DOUBLE_COMPLEX), allocatable :: dk2(:,:,:)
 
-  Nx = 64
-  Ny = 64
-  Nz = 64
+  type(json_file) :: json
+  
+  logical :: is_found
 
-  dx = 0.5
-  dy = 0.5
-  dz = 0.5  
+  ! initialising the json_file object
+  call json%initialize()
 
-  dt_coef = 0.1
+  ! loading in the input file
+  call json%load_file('config.json'); if (json%failed()) stop
+
+  ! reading in the input data
+  ! read in grid size
+  call json%get('Nx', Nx, is_found); if (.not. is_found) stop
+  call json%get('Ny', Ny, is_found); if (.not. is_found) stop
+  call json%get('Nz', Nz, is_found); if (.not. is_found) stop
+  ! read in grid spacing
+  call json%get('dx', dx, is_found); if (.not. is_found) stop
+  call json%get('dy', dy, is_found); if (.not. is_found) stop
+  call json%get('dz', dz, is_found); if (.not. is_found) stop
+  ! read in time step size
+  call json%get('dt_coef', dt_coef, is_found); if (.not. is_found) stop
+  ! read in time step numbers
+  call json%get('im_t_steps', im_t_steps, is_found); if (.not. is_found) stop
+  call json%get('re_t_steps', re_t_steps, is_found); if (.not. is_found) stop
+  ! read in time step saving numbers
+  call json%get('im_t_save', im_t_save, is_found); if (.not. is_found) stop
+  call json%get('re_t_save', re_t_save, is_found); if (.not. is_found) stop
+  ! read in theoretical parameters (effective atom number here)
+  call json%get('Nlck', Nlck, is_found); if (.not. is_found) stop
 
   ! initialise time-step
   dt = dt_coef*min(dx,dy,dz)**2
 
   ! set up 3D spatial grid
-  write(*,*) "setting up the Cartesian space grid"
   x = space_grid(Nx,dx)
   y = space_grid(Ny,dy)
   z = space_grid(Nz,dz)
 
   ! set up 3D momentum space grid
-  write(*,*) "setting up the momentum space grid"
   kx = mom_grid(Nx,dx)
   ky = mom_grid(Ny,dy)
   kz = mom_grid(Nz,dz)
@@ -52,11 +75,37 @@ program gp_lck
   ! compute initial profile of wavefunction
   psi = init_wav(x,y,z)
  
-  call renorm(psi,dx,dy,dz,Nlck,Nx,Ny,Nz)
-
-  dk2 = exp_lap(kx,ky,kz,dt)
+  call renorm(psi,dx,dy,dz,Nlck)
 
   ! begin time-stepping
-  call ssfm(psi,dk2,T_STEPS,dt,dx,dy,dz,Nlck,IM_REAL)
+  if (im_t_steps > 0) then
+    write(*,*) "beginning imaginary time"
+    
+    ! state that the time-stepping should expect imaginary time
+    im_real = 0
+    
+    ! initialise arrays and parameters
+    dk2 = exp_lap(kx,ky,kz,dt)
+    mu = -1.0
+    
+    ! imaginary time function
+    call ssfm(psi,dk2,im_t_steps,im_t_save,dt,dx,dy,dz,Nlck,mu,im_real)
+  end if
+  if (re_t_steps > 0) then
+    write(*,*) "beginning real time"
+    
+    ! state that the time-stepping should expect real time
+    im_real = 1
 
+    ! initilise arrays and parameters (in particular a complex time-step)
+    dt = complex(0.0,1.0)*dt
+    dk2 = exp_lap(kx,ky,kz,dt)
+    
+    ! real time function
+    call ssfm(psi,dk2,re_t_steps,re_t_save,dt,dx,dy,dz,Nlck,mu,im_real)
+  end if
+  if (im_t_steps == 0 .and. re_t_steps == 0) then
+    ! if there are no time-steps for imaginary and real time then stop program
+    stop
+  end if
 end program
