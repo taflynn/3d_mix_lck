@@ -1,3 +1,4 @@
 gp_lck
 *.o
 *.mod
+config.json
