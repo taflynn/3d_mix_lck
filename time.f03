@@ -1,6 +1,7 @@
 !> \\file time.f03
 module time
   use OMP_LIB
+  use HDF5
   use FFTW3
   use rhs
 
@@ -31,10 +32,21 @@ module time
     
     integer(C_INT) :: nthreads
     integer(C_INT) :: error
+  
+    character(len=4) :: t_current 
+    integer :: h5_error 
+    integer(HID_T) :: file_id
+    integer(HID_T) :: dset_id
+    integer(HID_T) :: dspace_id
+    integer(HSIZE_T), dimension(3) :: dims
+    character(len=19) :: filename_wav
 
-    Nx = size(psi, dim = 1)
-    Ny = size(psi, dim = 2)
-    Nz = size(psi, dim = 3)
+    call h5open_f(h5_error)
+
+    dims = shape(psi)
+    Nx = dims(1)
+    Ny = dims(2)
+    Nz = dims(3)
 
     Nxyz = Nx*Ny*Nz
 
@@ -76,16 +88,38 @@ module time
           mu = chem_pot(psi,psi_k,dk2,plan_back,Nx,Ny,Nz,dt)
         end if
       end if
+
+      ! data outputting
       if (mod(l,t_save) == 0) then
+        !
         write(*,*) "Percentage Completed"
         write(*,*) 100*(dble(l)/dble(T_STEPS))
         write(*,*) "Central Density"
         write(*,*) abs(psi(Nx/2,Ny/2,Nz/2))**2
         write(*,*) "Chemical Potential"
         write(*,*) mu
+        ! outputting
+        write(t_current,'(I4.4)') 100*l/T_STEPS
+        if (im_real == 0) then
+          filename_wav = 'psi_im_t_'//trim(t_current)//'.h5'
+        elseif (im_real == 1) then
+          filename_wav = 'psi_re_t_'//trim(t_current)//'.h5'
+        end if
+        ! create wavefunction output file
+        call h5fcreate_f(filename_wav, H5F_ACC_TRUNC_F, file_id, h5_error)
+        ! save real component of wavefunction
+        call h5screate_simple_f(3, dims, dspace_id, h5_error)
+        call h5dcreate_f(file_id, 'psi_real', H5T_NATIVE_DOUBLE, dspace_id, dset_id, h5_error)
+        call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, real(psi), dims, h5_error)
+        ! save imaginary component of wavefunction
+        call h5dcreate_f(file_id, 'psi_imag', H5T_NATIVE_DOUBLE, dspace_id, dset_id, h5_error)
+        call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, aimag(psi), dims, h5_error)
+        call h5dclose_f(dset_id, h5_error)
+        call h5sclose_f(dspace_id, h5_error)
+        call h5fclose_f(file_id, h5_error)
       end if
     end do
-
+    call h5close_f(h5_error)
   end subroutine ssfm
 
   subroutine renorm(psi,dx,dy,dz,Nlck)

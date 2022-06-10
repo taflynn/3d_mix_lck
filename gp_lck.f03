@@ -2,6 +2,7 @@
 program gp_lck
   use OMP_LIB
   use json_module
+  use HDF5
   use FFTW3
   use grid
   use init
@@ -32,6 +33,13 @@ program gp_lck
   type(json_file) :: json
   
   logical :: is_found
+
+  integer :: error
+  integer(HID_T) :: file_id
+  integer(HID_T) :: dset_id
+  integer(HID_T) :: dspace_id
+  integer(HSIZE_T), dimension(2) :: dims_r
+  character(len=7) :: filename_grid = 'grid.h5'
 
   ! initialising the json_file object
   call json%initialize()
@@ -71,7 +79,48 @@ program gp_lck
   kx = mom_grid(Nx,dx)
   ky = mom_grid(Ny,dy)
   kz = mom_grid(Nz,dz)
+ 
+  ! initiate the hdf5 environment
+  call h5open_f(error)
 
+  ! create the grid.h5 file
+  call h5fcreate_f(filename_grid, H5F_ACC_TRUNC_F, file_id, error)
+  ! saving x-array
+  call h5screate_simple_f(1, dims_r, dspace_id, error); if (Nx .ne. Ny .and. Nx .ne. Nz) stop 
+  dims_r = size(x)
+  call h5dcreate_f(file_id, 'x', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
+  call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, x, dims_r, error)
+  call h5dclose_f(dset_id, error)
+  ! saving y-array
+  dims_r = size(y)
+  call h5dcreate_f(file_id, 'y', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
+  call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, y, dims_r, error)
+  call h5dclose_f(dset_id, error)
+  ! saving z-array
+  dims_r = size(z)
+  call h5dcreate_f(file_id, 'z', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
+  call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, z, dims_r, error)
+  call h5dclose_f(dset_id, error)
+  ! saving kx-array
+  dims_r = size(kx)
+  call h5dcreate_f(file_id, 'kx', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
+  call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, kx, dims_r, error)
+  call h5dclose_f(dset_id, error)
+  ! saving ky-array
+  dims_r = size(ky)
+  call h5dcreate_f(file_id, 'ky', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
+  call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, ky, dims_r, error)
+  call h5dclose_f(dset_id, error)
+  ! saving kz-array
+  dims_r = size(kz)
+  call h5dcreate_f(file_id, 'kz', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
+  call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, kz, dims_r, error)
+  call h5dclose_f(dset_id, error)
+  call h5sclose_f(dspace_id, error)
+  ! close the grid.h5 file
+  call h5fclose_f(file_id, error)
+  
+  call h5close_f(error)
   ! compute initial profile of wavefunction
   psi = init_wav(x,y,z)
  
