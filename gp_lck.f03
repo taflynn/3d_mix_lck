@@ -31,41 +31,45 @@ program gp_lck
   complex(C_DOUBLE_COMPLEX), allocatable :: dk2(:,:,:)
 
   type(json_file) :: json
-  
+
   logical :: is_found
 
   integer :: error
   integer(HID_T) :: file_id
   integer(HID_T) :: dset_id
   integer(HID_T) :: dspace_id
-  integer(HSIZE_T), dimension(2) :: dims_r
+  integer(HSIZE_T), dimension(1) :: dims_r
   character(len=7) :: filename_grid = 'grid.h5'
 
   ! initialising the json_file object
-  call json%initialize()
+  call json%initialize(compact_reals=.true.)
 
   ! loading in the input file
-  call json%load_file('config.json'); if (json%failed()) stop
+  call json%load(filename='config.json') 
 
+  call json%print()
   ! reading in the input data
   ! read in grid size
-  call json%get('Nx', Nx, is_found); if (.not. is_found) stop
-  call json%get('Ny', Ny, is_found); if (.not. is_found) stop
-  call json%get('Nz', Nz, is_found); if (.not. is_found) stop
+  call json%get("Nx", Nx, is_found)
+  call json%get("Ny", Ny, is_found)
+  call json%get("Nz", Nz, is_found)
   ! read in grid spacing
-  call json%get('dx', dx, is_found); if (.not. is_found) stop
-  call json%get('dy', dy, is_found); if (.not. is_found) stop
-  call json%get('dz', dz, is_found); if (.not. is_found) stop
+  call json%get("dx", dx, is_found)
+  call json%get("dy", dy, is_found)
+  call json%get("dz", dz, is_found)
   ! read in time step size
-  call json%get('dt_coef', dt_coef, is_found); if (.not. is_found) stop
+  call json%get("dt_coef", dt_coef, is_found)
   ! read in time step numbers
-  call json%get('im_t_steps', im_t_steps, is_found); if (.not. is_found) stop
-  call json%get('re_t_steps', re_t_steps, is_found); if (.not. is_found) stop
+  call json%get("im_t_steps", im_t_steps, is_found)
+  call json%get("re_t_steps", re_t_steps, is_found)
   ! read in time step saving numbers
-  call json%get('im_t_save', im_t_save, is_found); if (.not. is_found) stop
-  call json%get('re_t_save', re_t_save, is_found); if (.not. is_found) stop
+  call json%get("im_t_save", im_t_save, is_found)
+  call json%get("re_t_save", re_t_save, is_found)
   ! read in theoretical parameters (effective atom number here)
-  call json%get('Nlck', Nlck, is_found); if (.not. is_found) stop
+  call json%get("Nlck", Nlck, is_found)
+ 
+
+  call json%destroy()
 
   ! initialise time-step
   dt = dt_coef*min(dx,dy,dz)**2
@@ -82,37 +86,37 @@ program gp_lck
  
   ! initiate the hdf5 environment
   call h5open_f(error)
-
   ! create the grid.h5 file
   call h5fcreate_f(filename_grid, H5F_ACC_TRUNC_F, file_id, error)
   ! saving x-array
+  dims_r = size(x,dim=1)
   call h5screate_simple_f(1, dims_r, dspace_id, error); if (Nx .ne. Ny .and. Nx .ne. Nz) stop 
-  dims_r = size(x)
   call h5dcreate_f(file_id, 'x', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, x, dims_r, error)
   call h5dclose_f(dset_id, error)
   ! saving y-array
-  dims_r = size(y)
+  dims_r = size(y,dim=1)
   call h5dcreate_f(file_id, 'y', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, y, dims_r, error)
   call h5dclose_f(dset_id, error)
   ! saving z-array
-  dims_r = size(z)
+  dims_r = size(z,dim=1)
   call h5dcreate_f(file_id, 'z', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, z, dims_r, error)
   call h5dclose_f(dset_id, error)
+
   ! saving kx-array
-  dims_r = size(kx)
+  dims_r = size(kx,dim=1)
   call h5dcreate_f(file_id, 'kx', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, kx, dims_r, error)
   call h5dclose_f(dset_id, error)
   ! saving ky-array
-  dims_r = size(ky)
+  dims_r = size(ky,dim=1)
   call h5dcreate_f(file_id, 'ky', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, ky, dims_r, error)
   call h5dclose_f(dset_id, error)
   ! saving kz-array
-  dims_r = size(kz)
+  dims_r = size(kz,dim=1)
   call h5dcreate_f(file_id, 'kz', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, kz, dims_r, error)
   call h5dclose_f(dset_id, error)
@@ -120,11 +124,16 @@ program gp_lck
   ! close the grid.h5 file
   call h5fclose_f(file_id, error)
   
-  call h5close_f(error)
   ! compute initial profile of wavefunction
+  
+  write(*,*) 'setting up wavefunction'
+  
   psi = init_wav(x,y,z)
  
+  write(*,*) 'about to renormalise'
   call renorm(psi,dx,dy,dz,Nlck)
+
+  write(*,*) 'normalised'
 
   ! begin time-stepping
   if (im_t_steps > 0) then
@@ -153,8 +162,8 @@ program gp_lck
     ! real time function
     call ssfm(psi,dk2,re_t_steps,re_t_save,dt,dx,dy,dz,Nlck,mu,im_real)
   end if
-  if (im_t_steps == 0 .and. re_t_steps == 0) then
-    ! if there are no time-steps for imaginary and real time then stop program
-    stop
-  end if
+  !if (im_t_steps == 0 .and. re_t_steps == 0) then
+  !  ! if there are no time-steps for imaginary and real time then stop program 
+  !  stop
+  !end if
 end program
