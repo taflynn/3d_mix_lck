@@ -8,11 +8,12 @@ module init
   contains
 
   ! generate the initial form of the wavefunction 
-  function init_wav(x,y,z) result(psi)
-   
-    implicit none
+  function init_wav(x,y,z,init_type,gauss_sig) result(psi)
 
     double precision, intent(in) :: x(:), y(:), z(:)
+    integer, intent(in) :: init_type    
+    double precision, intent(in) :: gauss_sig
+
     complex(C_DOUBLE_COMPLEX), allocatable :: psi(:,:,:)
    
     ! Local variables 
@@ -24,14 +25,30 @@ module init
     Nz = size(z)
 
     allocate(psi(Nx,Ny,Nz))
-
-    do k = 1, Nz
-      do j = 1, Ny
-        do i = 1, Nx
-          psi(i,j,k) = exp(-(x(i)**2 + y(j)**2 + z(k)**2))
+    
+    if (init_type .eq. 1) then
+      write(*,*) "initial input to imaginary time: Gaussian"
+      do k = 1, Nz
+        do j = 1, Ny
+          do i = 1, Nx
+            psi(i,j,k) = exp(-(x(i)**2/(2*(gauss_sig)**2) &
+                             + y(j)**2/(2*(gauss_sig)**2) &
+                             + z(k)**2/(2*(gauss_sig)**2)))*0.5
+          end do
         end do
       end do
-    end do
+    elseif (init_type .eq. 2) then
+      write(*,*) "initial input to imaginary time: Gaussian"
+      do k = 1, Nz
+        do j = 1, Ny
+          do i = 1, Nx
+            psi(i,j,k) = exp(-(x(i)**2/(2*(gauss_sig)**2) &
+                             + y(j)**2/(2*(gauss_sig)**2) &
+                             + z(k)**2/(2*(gauss_sig)**2))**3.0)*0.5
+          end do
+        end do
+      end do
+    end if
 
   end function init_wav
 

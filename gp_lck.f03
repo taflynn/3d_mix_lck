@@ -14,12 +14,15 @@ program gp_lck
 
   integer :: Nx, Ny, Nz
   double precision :: dx, dy, dz 
-  double precision :: dt_coef
+  double precision :: im_dt_coef, re_dt_coef
   
   integer :: im_t_steps, re_t_steps
   integer :: im_t_save, re_t_save
 
   double precision :: Nlck
+  
+  integer :: init_type
+  double precision :: gauss_sig
 
   integer :: im_real
   double complex :: dt
@@ -42,10 +45,10 @@ program gp_lck
   character(len=7) :: filename_grid = 'grid.h5'
 
   ! initialising the json_file object
-  call json%initialize(compact_reals=.true.)
+  call json%initialize()
 
   ! loading in the input file
-  call json%load(filename='config.json') 
+  call json%load(filename='./config.json') 
 
   call json%print()
   ! reading in the input data
@@ -58,21 +61,21 @@ program gp_lck
   call json%get("dy", dy, is_found)
   call json%get("dz", dz, is_found)
   ! read in time step size
-  call json%get("dt_coef", dt_coef, is_found)
+  call json%get("im_dt_coef", im_dt_coef, is_found)
+  call json%get("re_dt_coef", re_dt_coef, is_found)
   ! read in time step numbers
   call json%get("im_t_steps", im_t_steps, is_found)
   call json%get("re_t_steps", re_t_steps, is_found)
   ! read in time step saving numbers
   call json%get("im_t_save", im_t_save, is_found)
   call json%get("re_t_save", re_t_save, is_found)
+  ! read in initial wavefunction profile options
+  call json%get("init_type", init_type, is_found)
+  call json%get("gauss_sig", gauss_sig, is_found)
   ! read in theoretical parameters (effective atom number here)
   call json%get("Nlck", Nlck, is_found)
  
-
   call json%destroy()
-
-  ! initialise time-step
-  dt = dt_coef*min(dx,dy,dz)**2
 
   ! set up 3D spatial grid
   x = space_grid(Nx,dx)
@@ -128,8 +131,10 @@ program gp_lck
   
   write(*,*) 'setting up wavefunction'
   
-  psi = init_wav(x,y,z)
- 
+  psi = init_wav(x,y,z,init_type,gauss_sig)
+
+  write(*,*) abs(psi(Nx/2,Ny/2,Nz/2))**2
+  
   write(*,*) 'about to renormalise'
   call renorm(psi,dx,dy,dz,Nlck)
 
@@ -138,6 +143,9 @@ program gp_lck
   ! begin time-stepping
   if (im_t_steps > 0) then
     write(*,*) "beginning imaginary time"
+  
+    ! imaginary time step
+    dt = im_dt_coef*min(dx,dy,dz)**2
     
     ! state that the time-stepping should expect imaginary time
     im_real = 0
@@ -152,11 +160,13 @@ program gp_lck
   if (re_t_steps > 0) then
     write(*,*) "beginning real time"
     
+    ! real time step
+    dt = complex(0.0,1.0)*re_dt_coef*min(dx,dy,dz)**2
+    
     ! state that the time-stepping should expect real time
     im_real = 1
 
     ! initilise arrays and parameters (in particular a complex time-step)
-    dt = complex(0.0,1.0)*dt
     dk2 = exp_lap(kx,ky,kz,dt)
     
     ! real time function
