@@ -95,7 +95,7 @@ module time
         write(*,*) "Percentage Completed"
         write(*,*) 100*(dble(l)/dble(T_STEPS))
         write(*,*) "Central Density"
-        write(*,*) abs(psi(Nx/2,Ny/2,Nz/2))**2
+        write(*,*) abs(psi(1+Nx/2,1+Ny/2,1+Nz/2))**2
         write(*,*) "Chemical Potential"
         write(*,*) mu
         ! outputting

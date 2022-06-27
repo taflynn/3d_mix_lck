@@ -18,7 +18,7 @@ module init
    
     ! Local variables 
     integer :: Nx, Ny, Nz
-    integer :: i,j,k
+    integer :: i, j, k
    
     Nx = size(x)
     Ny = size(y)
@@ -26,25 +26,25 @@ module init
 
     allocate(psi(Nx,Ny,Nz))
     
-    if (init_type .eq. 1) then
+    if (init_type == 1) then
       write(*,*) "initial input to imaginary time: Gaussian"
       do k = 1, Nz
         do j = 1, Ny
           do i = 1, Nx
-            psi(i,j,k) = exp(-(x(i)**2/(2*(gauss_sig)**2) &
-                             + y(j)**2/(2*(gauss_sig)**2) &
-                             + z(k)**2/(2*(gauss_sig)**2)))*0.5
+            psi(i,j,k) = exp(-(x(i)**2.0/(2.0*gauss_sig**2.0) &
+                             + y(j)**2.0/(2.0*gauss_sig**2.0) &
+                             + z(k)**2.0/(2.0*gauss_sig**2.0)))
           end do
         end do
       end do
-    elseif (init_type .eq. 2) then
+    elseif (init_type == 2) then
       write(*,*) "initial input to imaginary time: Gaussian"
       do k = 1, Nz
         do j = 1, Ny
           do i = 1, Nx
-            psi(i,j,k) = exp(-(x(i)**2/(2*(gauss_sig)**2) &
-                             + y(j)**2/(2*(gauss_sig)**2) &
-                             + z(k)**2/(2*(gauss_sig)**2))**3.0)*0.5
+            psi(i,j,k) = exp(-(x(i)**2.0/(2.0*gauss_sig**2.0) &
+                             + y(j)**2.0/(2.0*gauss_sig**2.0) &
+                             + z(k)**2.0/(2.0*gauss_sig**2.0))**3.0)
           end do
         end do
       end do

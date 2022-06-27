@@ -48,7 +48,7 @@ program gp_lck
   call json%initialize()
 
   ! loading in the input file
-  call json%load(filename='./config.json') 
+  call json%load(filename='config.json') 
 
   call json%print()
   ! reading in the input data
@@ -92,34 +92,34 @@ program gp_lck
   ! create the grid.h5 file
   call h5fcreate_f(filename_grid, H5F_ACC_TRUNC_F, file_id, error)
   ! saving x-array
-  dims_r = size(x,dim=1)
+  dims_r = size(x)
   call h5screate_simple_f(1, dims_r, dspace_id, error); if (Nx .ne. Ny .and. Nx .ne. Nz) stop 
   call h5dcreate_f(file_id, 'x', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, x, dims_r, error)
   call h5dclose_f(dset_id, error)
   ! saving y-array
-  dims_r = size(y,dim=1)
+  dims_r = size(y)
   call h5dcreate_f(file_id, 'y', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, y, dims_r, error)
   call h5dclose_f(dset_id, error)
   ! saving z-array
-  dims_r = size(z,dim=1)
+  dims_r = size(z)
   call h5dcreate_f(file_id, 'z', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, z, dims_r, error)
   call h5dclose_f(dset_id, error)
 
   ! saving kx-array
-  dims_r = size(kx,dim=1)
+  dims_r = size(kx)
   call h5dcreate_f(file_id, 'kx', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, kx, dims_r, error)
   call h5dclose_f(dset_id, error)
   ! saving ky-array
-  dims_r = size(ky,dim=1)
+  dims_r = size(ky)
   call h5dcreate_f(file_id, 'ky', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, ky, dims_r, error)
   call h5dclose_f(dset_id, error)
   ! saving kz-array
-  dims_r = size(kz,dim=1)
+  dims_r = size(kz)
   call h5dcreate_f(file_id, 'kz', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, kz, dims_r, error)
   call h5dclose_f(dset_id, error)
@@ -129,16 +129,9 @@ program gp_lck
   
   ! compute initial profile of wavefunction
   
-  write(*,*) 'setting up wavefunction'
-  
   psi = init_wav(x,y,z,init_type,gauss_sig)
 
-  write(*,*) abs(psi(Nx/2,Ny/2,Nz/2))**2
-  
-  write(*,*) 'about to renormalise'
   call renorm(psi,dx,dy,dz,Nlck)
-
-  write(*,*) 'normalised'
 
   ! begin time-stepping
   if (im_t_steps > 0) then
@@ -161,7 +154,9 @@ program gp_lck
     write(*,*) "beginning real time"
     
     ! real time step
-    dt = complex(0.0,1.0)*re_dt_coef*min(dx,dy,dz)**2
+    dt = cmplx(complex(0.0,1.0)*re_dt_coef*min(dx,dy,dz)**2)
+    
+    write(*,*) dt
     
     ! state that the time-stepping should expect real time
     im_real = 1

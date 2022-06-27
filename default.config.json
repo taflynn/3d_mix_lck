@@ -2,16 +2,16 @@
 "Nx": 64,
 "Ny": 64,
 "Nz": 64,
-"dx": 0.25,
-"dy": 0.25,
-"dz": 0.25,
+"dx": 0.5,
+"dy": 0.5,
+"dz": 0.5,
 "im_dt_coef": 0.1,
 "re_dt_coef": 0.1,
 "im_t_steps": 10000,
 "re_t_steps": 10000,
 "im_t_save": 1000,
 "re_t_save": 100,
-"init_wav":"ngauss",
-"gauss_sig":2.0
-"Nlck":1501
+"init_type":1,
+"gauss_sig":2.0,
+"Nlck":65
 }
