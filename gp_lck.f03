@@ -81,7 +81,7 @@ program gp_lck
   x = space_grid(Nx,dx)
   y = space_grid(Ny,dy)
   z = space_grid(Nz,dz)
-
+  
   ! set up 3D momentum space grid
   kx = mom_grid(Nx,dx)
   ky = mom_grid(Ny,dy)
@@ -132,7 +132,7 @@ program gp_lck
   psi = init_wav(x,y,z,init_type,gauss_sig)
 
   call renorm(psi,dx,dy,dz,Nlck)
-
+  
   ! begin time-stepping
   if (im_t_steps > 0) then
     write(*,*) "beginning imaginary time"
@@ -145,7 +145,7 @@ program gp_lck
     
     ! initialise arrays and parameters
     dk2 = exp_lap(kx,ky,kz,dt)
-    mu = -1.0
+    mu = 0.0
     
     ! imaginary time function
     call ssfm(psi,dk2,im_t_steps,im_t_save,dt,dx,dy,dz,Nlck,mu,im_real)
@@ -156,19 +156,18 @@ program gp_lck
     ! real time step
     dt = cmplx(complex(0.0,1.0)*re_dt_coef*min(dx,dy,dz)**2)
     
-    write(*,*) dt
-    
     ! state that the time-stepping should expect real time
     im_real = 1
 
     ! initilise arrays and parameters (in particular a complex time-step)
     dk2 = exp_lap(kx,ky,kz,dt)
-    
+    mu = 0.0
+     
     ! real time function
     call ssfm(psi,dk2,re_t_steps,re_t_save,dt,dx,dy,dz,Nlck,mu,im_real)
   end if
-  !if (im_t_steps == 0 .and. re_t_steps == 0) then
-  !  ! if there are no time-steps for imaginary and real time then stop program 
-  !  stop
-  !end if
+  if (im_t_steps == 0 .and. re_t_steps == 0) then
+    ! if there are no time-steps for imaginary and real time then stop program 
+    stop
+  end if
 end program

@@ -81,12 +81,12 @@ module time
       ! renormalise wavefunction
       if (im_real == 0) then
         call renorm(psi,dx,dy,dz,Nlck)
-        if (mod(l,t_save) == 0) then
+        !if (mod(l,t_save) == 0) then
           ! FFT wavefunction to real space
           call fftw_execute_dft(plan_forw,psi,psi_k)
           psi_k = psi_k/sqrt(dble(Nxyz))
           mu = chem_pot(psi,psi_k,dk2,plan_back,Nx,Ny,Nz,dt)
-        end if
+        !end if
       end if
 
       ! data outputting
@@ -132,8 +132,8 @@ module time
 
     ! local variables
     double precision :: norm
-    
-    norm = sum(abs(psi)**2)*dx*dy*dz
+
+    norm = sum(abs(psi)**2)
     psi = psi*sqrt(Nlck/norm)
 
   end subroutine renorm

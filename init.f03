@@ -33,7 +33,7 @@ module init
           do i = 1, Nx
             psi(i,j,k) = exp(-(x(i)**2.0/(2.0*gauss_sig**2.0) &
                              + y(j)**2.0/(2.0*gauss_sig**2.0) &
-                             + z(k)**2.0/(2.0*gauss_sig**2.0)))
+                             + z(k)**2.0/(2.0*gauss_sig**2.0)))**0.5
           end do
         end do
       end do
@@ -44,7 +44,7 @@ module init
           do i = 1, Nx
             psi(i,j,k) = exp(-(x(i)**2.0/(2.0*gauss_sig**2.0) &
                              + y(j)**2.0/(2.0*gauss_sig**2.0) &
-                             + z(k)**2.0/(2.0*gauss_sig**2.0))**3.0)
+                             + z(k)**2.0/(2.0*gauss_sig**2.0))**3.0)**0.5
           end do
         end do
       end do
