@@ -21,7 +21,7 @@ module grid
     
     allocate(r(N))
 
-    ! spactial array
+    ! spatial array
     do i = 1,N
       r(i) = (-N/2.0 + i - 1.0)*dr
     end do
@@ -45,14 +45,17 @@ module grid
 
     double precision, allocatable :: kr_low(:), kr_high(:)
 
+    ! box size
     Lr = Nr*dr
 
+    ! momentum space step
     dkr = 2.0*pi/Lr
 
     allocate(kr_low(Nr/2))
     allocate(kr_high(Nr/2))
     allocate(kr(Nr))
 
+    ! spectral array defined as [0,...,(Nr-1)*(dkr/2),-Nr*(dkr/2),...,-dkr2]
     do i = 1,Nr/2
       kr_low(i) = (i-1.0)*dkr
       kr_high(i) = (-Nr/2.0 + i - 1.0)*dkr
@@ -65,8 +68,8 @@ module grid
 
   end function mom_grid
 
-  ! generate the 3D array for the exponential form of the Laplacian operator
-  function exp_lap(kx,ky,kz,dt) result(dk2)
+  ! generate the 3D array for the exponential form of the laplacian operator
+  function exp_lap(kx,ky,kz,dt)
 
     implicit none
 
@@ -76,18 +79,19 @@ module grid
     double complex :: dt
 
     double precision :: kx(:), ky(:), kz(:)
-    complex(C_DOUBLE_COMPLEX), allocatable :: dk2(:,:,:)
+    complex(C_DOUBLE_COMPLEX), allocatable :: exp_lap(:,:,:)
 
     Nx = size(kx)
     Ny = size(ky)
     Nz = size(kz)
     
-    allocate(dk2(Nx,Ny,Nz))
+    allocate(exp_lap(Nx,Ny,Nz))
 
+    ! laplacian operator defined in the ssfm form
     do k = 1, Nz
       do j = 1, Ny
         do i = 1, Nx
-          dk2(i,j,k) = exp(-0.5*dt*(kx(i)**2 + ky(j)**2 + kz(k)**2))
+          exp_lap(i,j,k) = exp(-0.5*dt*(kx(i)**2 + ky(j)**2 + kz(k)**2))
         end do
       end do
     end do

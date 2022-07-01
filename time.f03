@@ -11,7 +11,6 @@ module time
 
   ! main ssfm time-stepping function
   subroutine ssfm(psi,dk2,t_steps,t_save,dt,dx,dy,dz,Nlck,mu,im_real)
-    implicit none
 
     integer, intent(in) :: t_steps, t_save, im_real
     double precision, intent(in) :: dx, dy, dz
@@ -51,17 +50,19 @@ module time
     Nxyz = Nx*Ny*Nz
 
     allocate(psi_k(Nx,Ny,Nz))
-
+    
+    ! initialising FFTW with threads
     error = fftw_init_threads()
     nthreads = omp_get_max_threads()
     call fftw_plan_with_nthreads(int(nthreads,C_INT))
-
+    
+    ! constructing FFTW plans
     plan_forw = fftw_plan_dft_3d(Nz,Ny,Nx,psi,psi_k,FFTW_FORWARD,FFTW_ESTIMATE)
     plan_back = fftw_plan_dft_3d(Nz,Ny,Nx,psi_k,psi,FFTW_BACKWARD,FFTW_ESTIMATE)
     
     do l = 1, t_steps
 
-      ! first half-step
+      ! first half-step (non-linear terms)
       call V_rhs(psi,mu,dt,Nx,Ny,Nz)
       
       ! FFT wavefunction to momentum space
@@ -75,18 +76,18 @@ module time
       call fftw_execute_dft(plan_back,psi_k,psi)
       psi = psi/sqrt(dble(Nxyz))
 
-      ! second half-step
+      ! second half-step (non-linear terms)
       call V_rhs(psi,mu,dt,Nx,Ny,Nz)
 
-      ! renormalise wavefunction
+      ! renormalise wavefunction (if in imaginary time)
       if (im_real == 0) then
         call renorm(psi,dx,dy,dz,Nlck)
-        !if (mod(l,t_save) == 0) then
+        if (mod(l,t_save) == 0) then
           ! FFT wavefunction to real space
           call fftw_execute_dft(plan_forw,psi,psi_k)
           psi_k = psi_k/sqrt(dble(Nxyz))
           mu = chem_pot(psi,psi_k,dk2,plan_back,Nx,Ny,Nz,dt)
-        !end if
+        end if
       end if
 
       ! data outputting
@@ -123,7 +124,6 @@ module time
   end subroutine ssfm
 
   subroutine renorm(psi,dx,dy,dz,Nlck)
-    implicit none
     
     double precision, intent(in) :: dx, dy, dz
     double precision, intent(in) :: Nlck
@@ -132,14 +132,13 @@ module time
 
     ! local variables
     double precision :: norm
+    
+    norm = sum(abs(psi)**2)*dx*dy*dz
 
-    norm = sum(abs(psi)**2)
     psi = psi*sqrt(Nlck/norm)
-
   end subroutine renorm
 
   function chem_pot(psi,psi_k,dk2,plan_back,Nx,Ny,Nz,dt)
-    implicit none
     
     type(C_PTR), intent(in) :: plan_back
     
@@ -165,8 +164,10 @@ module time
     allocate(lap_psik(Nx,Ny,Nz))
     allocate(k2(Nx,Ny,Nz))
 
+    ! define the laplacian operator from the exponential laplacian used in the ssfm method
     k2 = (2.0/dt)*log(dk2)
 
+    ! compute second derivative of wavefunction in momentum space
     !$omp parallel do collapse(3)   
     do k = 1, Nz
       do j = 1, Ny
@@ -177,9 +178,11 @@ module time
     end do
     !$omp end parallel do
     
+    ! transform kinetic energy term back into real space
     call fftw_execute_dft(plan_back,lap_psik,lap_psi)
     lap_psi = lap_psi/sqrt(dble(Nx*Ny*Nz))
     
+    ! compute chemical potential
     chem_pot = sum(-0.5*conjg(psi)*lap_psi - 3.0*abs(psi)**4 + 2.5*abs(psi)**5)/sum(abs(psi)**2)
   
   end function chem_pot

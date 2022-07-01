@@ -19,7 +19,8 @@ module rhs
 
     ! local variables
     integer :: i, j, k
-
+    
+    ! iterate across x, y and z of the two-body and Lee-Huang-Yang terms
     !$omp parallel do collapse(3)
     do k = 1, Nz
       do j = 1, Ny
@@ -42,6 +43,7 @@ module rhs
 
     integer :: i, j, k
     
+    ! iterate across kx, ky and kz of the kinetic energy term
     !$omp parallel do collapse(3)
     do k = 1, Nz
       do j = 1, Ny
