@@ -93,34 +93,34 @@ program gp_lck
   ! create the grid.h5 file
   call h5fcreate_f(filename_grid, H5F_ACC_TRUNC_F, file_id, error)
   ! saving x-array
-  dims_r = size(x)
+  dims_r = Nx
   call h5screate_simple_f(1, dims_r, dspace_id, error); if (Nx .ne. Ny .and. Nx .ne. Nz) stop 
   call h5dcreate_f(file_id, 'x', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, x, dims_r, error)
   call h5dclose_f(dset_id, error)
   ! saving y-array
-  dims_r = size(y)
+  dims_r = Ny
   call h5dcreate_f(file_id, 'y', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, y, dims_r, error)
   call h5dclose_f(dset_id, error)
   ! saving z-array
-  dims_r = size(z)
+  dims_r = Nz
   call h5dcreate_f(file_id, 'z', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, z, dims_r, error)
   call h5dclose_f(dset_id, error)
 
   ! saving kx-array
-  dims_r = size(kx)
+  dims_r = Nx
   call h5dcreate_f(file_id, 'kx', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, kx, dims_r, error)
   call h5dclose_f(dset_id, error)
   ! saving ky-array
-  dims_r = size(ky)
+  dims_r = Ny
   call h5dcreate_f(file_id, 'ky', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, ky, dims_r, error)
   call h5dclose_f(dset_id, error)
   ! saving kz-array
-  dims_r = size(kz)
+  dims_r = Nz
   call h5dcreate_f(file_id, 'kz', H5T_NATIVE_DOUBLE, dspace_id, dset_id, error)
   call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, kz, dims_r, error)
   call h5dclose_f(dset_id, error)
