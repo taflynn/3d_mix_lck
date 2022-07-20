@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -c 2
+#SBATCH -c 8
 #
 # number of nodes
 #SBATCH -N 1
