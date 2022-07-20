@@ -35,9 +35,9 @@ The `time` module contains two subroutines and one function for time-stepping th
 * Transform to Fourier space and compute the kinetic energy term
 * Transform back to real space and compute the other half potential step
 * Finally, additional calculations include chemical potential and renormalisation if in imaginary time
-This subroutine is also reponsible for the in-time data outputting (to `.h5` format), and for creating the FFTW plans (`psi` is the wavefunction, `dk2` is the Laplacian operator in exponential form, `t_steps` number of time-steps, `t_save` number of steps between writing data, `Nlck` is the effective atom number for the density-locked system, `mu` is the chemical potential, and `im_real` denotes imaginary (`im_real = 0`) or real (`im_real = 1`) time)
+This subroutine is also responsible for the in-time data outputting (to `.h5` format), and for creating the FFTW plans (`psi` is the wavefunction, `dk2` is the Laplacian operator in exponential form, `t_steps` number of time-steps, `t_save` number of steps between writing data, `Nlck` is the effective atom number for the density-locked system, `mu` is the chemical potential, and `im_real` denotes imaginary (`im_real = 0`) or real (`im_real = 1`) time)
 2) `renorm(psi,dx,dy,dz,Nlck)` - This subroutine renormalises the wavefunction (computed at each time-step in imaginary time)
-3) `chem_pot(psi,psi_k,dk2,plan_back,Nx,Ny,Nz,dt)` - The chemical potential is calculated at each imaginaru time-step, to aid in imaginary time convergence (`psi_k` is the Fourier transform of the wavefunction, and `plan_back` is the Inverse Fourier Transform plan)
+3) `chem_pot(psi,psi_k,dk2,plan_back,Nx,Ny,Nz,dt)` - The chemical potential is calculated at each imaginary time-step, to aid in imaginary time convergence (`psi_k` is the Fourier transform of the wavefunction, and `plan_back` is the Inverse Fourier Transform plan)
 
 ### `rhs.f03`
 The `rhs` module contains two subroutines:
