@@ -55,11 +55,16 @@ module time
     error = fftw_init_threads()
     nthreads = omp_get_max_threads()
     call fftw_plan_with_nthreads(int(nthreads,C_INT))
-    
+  
+    if (im_real == 0) then 
+      write(*,*) "number of threads:" 
+      write(*,*) nthreads
+    end if 
+
     ! constructing FFTW plans
     plan_forw = fftw_plan_dft_3d(Nz,Ny,Nx,psi,psi_k,FFTW_FORWARD,FFTW_ESTIMATE)
     plan_back = fftw_plan_dft_3d(Nz,Ny,Nx,psi_k,psi,FFTW_BACKWARD,FFTW_ESTIMATE)
-    
+
     do l = 1, t_steps
 
       ! first half-step (non-linear terms)
@@ -82,12 +87,12 @@ module time
       ! renormalise wavefunction (if in imaginary time)
       if (im_real == 0) then
         call renorm(psi,dx,dy,dz,Nlck)
-        if (mod(l,t_save) == 0) then
+        !if (mod(l,t_save) == 0) then
           ! FFT wavefunction to real space
           call fftw_execute_dft(plan_forw,psi,psi_k)
           psi_k = psi_k/sqrt(dble(Nxyz))
           mu = chem_pot(psi,psi_k,dk2,plan_back,Nx,Ny,Nz,dt)
-        end if
+        !end if
       end if
 
       ! data outputting
