@@ -117,6 +117,7 @@ module time
         call h5screate_simple_f(3, dims, dspace_id, h5_error)
         call h5dcreate_f(file_id, 'psi_real', H5T_NATIVE_DOUBLE, dspace_id, dset_id, h5_error)
         call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, real(psi), dims, h5_error)
+        call h5dclose_f(dset_id, h5_error)
         ! save imaginary component of wavefunction
         call h5dcreate_f(file_id, 'psi_imag', H5T_NATIVE_DOUBLE, dspace_id, dset_id, h5_error)
         call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, aimag(psi), dims, h5_error)
