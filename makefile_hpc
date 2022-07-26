@@ -1,14 +1,13 @@
-gp_lck: gp_lck.o grid.o init.o rhs.o time.o
-	gfortran *.o -O3 -march=native -I/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/include -L/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/lib -lfftw3_omp -lfftw3 -lm -fopenmp -L${HOME}/json-fortran/lib -ljsonfortran -I${HOME}/json-fortran/lib -L/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/lib -lhdf5_fortran -I/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/include -o gp_lck
-grid.mod: grid.f03
-	gfortran -c FFTW3.f03 grid.f03 init.f03 rhs.f03 time.f03 gp_lck.f03 -I/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/include -L/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/lib -lfftw3_omp -lfftw3 -lm -fopenmp -L${HOME}/json-fortran/lib -ljsonfortran -I${HOME}/json-fortran/lib -L/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/lib -lhdf5_fortran -I/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/include
-init.mod: init.f03
-	gfortran -c FFTW3.f03 grid.f03 init.f03 rhs.f03 time.f03 gp_lck.f03 -I/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/include -L/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/lib -lfftw3_omp -lfftw3 -lm -fopenmp -L${HOME}/json-fortran/lib -ljsonfortran -I${HOME}/json-fortran/lib -L/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/lib -lhdf5_fortran -I/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/include
-rhs.mod: rhs.f03
-	gfortran -c FFTW3.f03 grid.f03 init.f03 rhs.f03 time.f03 gp_lck.f03 -I/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/include -L/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/lib/ -lfftw3_omp -lfftw3 -lm -fopenmp -L${HOME}/json-fortran/lib -ljsonfortran -I${HOME}/json-fortran/lib -L/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/lib -lhdf5_fortran -I/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/include
-time.mod: time.f03
-	gfortran -c FFTW3.f03 grid.f03 init.f03 rhs.f03 time.f03 gp_lck.f03 -I/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/include -L/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/lib -lfftw3_omp -lfftw3 -lm -fopenmp -L${HOME}/json-fortran/lib -ljsonfortran -I${HOME}/json-fortran/lib -L/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/lib -lhdf5_fortran -I/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/include
+FC=gfortran
+FFLAG1=-I/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/include -L/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/lib -lfftw3_omp -lfftw3 -lm -fopenmp -L${HOME}/json-fortran/lib -ljsonfortran -I${HOME}/json-fortran/lib -L/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/lib -lhdf5_fortran -I/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/include -o gp_lck
+FFLAG2=-O3 -march=native
+SRC=gp_lck.f03 fft.f03 grid.f03 init.f03 rhs.f03 time.f03
+OBJ=${SRC:.f03=.o}
+gp_lck: ${OBJ} 
+	$(FC) $(OBJ) $(FFLAG2) $(FFLAG1) -o $@
+%.o: %.f03
+	$(FC) $(FFLAG1) -o $@ -c $<
 gp_lck.o: gp_lck.f03
-	gfortran -c FFTW3.f03 grid.f03 init.f03 rhs.f03 time.f03 gp_lck.f03 -I/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/include -L/mnt/storage/apps/eb/software/FFTW/3.3.10-gompi-2021b/lib -lfftw3_omp -lfftw3 -lm -fopenmp -L${HOME}/json-fortran/lib -ljsonfortran -I${HOME}/json-fortran/lib -L/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/lib -lhdf5_fortran -I/mnt/storage/apps/eb/software/HDF5/1.12.1-gompi-2021b/include
+	$(FC) $(FFLAG1) -c $<
 clean:
 	rm -r ./*.o ./*.mod
