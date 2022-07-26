@@ -1,7 +1,7 @@
 !> \\file grid.f03
 module grid
   
-  use FFTW3
+  use fft
 
   implicit none
   

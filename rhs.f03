@@ -1,7 +1,7 @@
 !> \\file rhs.f03
 module rhs
  
-  use FFTW3
+  use fft
 
   implicit none
 

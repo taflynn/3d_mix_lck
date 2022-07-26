@@ -2,7 +2,7 @@
 module time
   use OMP_LIB
   use HDF5
-  use FFTW3
+  use fft
   use rhs
 
   implicit none

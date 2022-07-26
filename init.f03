@@ -1,7 +1,7 @@
 !> \\file init.f03
 module init
 
-  use FFTW3
+  use fft
 
   implicit none
   

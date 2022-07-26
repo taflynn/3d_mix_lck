@@ -3,7 +3,7 @@ program gp_lck
   use OMP_LIB
   use json_module
   use HDF5
-  use FFTW3
+  use fft
   use grid
   use init
   use time
