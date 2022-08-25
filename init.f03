@@ -1,6 +1,7 @@
 !> \\file init.f03
 module init
-
+  
+  use HDF5
   use fft
 
   implicit none
@@ -13,6 +14,7 @@ module init
     double precision, intent(in) :: x(:), y(:), z(:)
     integer, intent(in) :: init_type    
     double precision, intent(in) :: gauss_sig
+
 
     complex(C_DOUBLE_COMPLEX), allocatable :: init_wav(:,:,:)
    
@@ -54,4 +56,59 @@ module init
 
   end function init_wav
 
+  function readin_wav(x,y,z)
+    
+    double precision, intent(in) :: x(:), y(:), z(:)
+    complex(C_DOUBLE_COMPLEX), allocatable :: readin_wav(:,:,:)
+    
+    ! Local variables 
+    type(C_PTR) :: f_ptr
+    double precision, allocatable, target :: psi_imag(:,:,:), psi_real(:,:,:)
+
+    integer :: Nx, Ny, Nz
+
+    integer :: errors
+    integer(HID_T) :: file_id, dset_id
+    integer(HSIZE_T), dimension(3) :: dims
+
+    dims(1) = size(x)
+    dims(2) = size(y)
+    dims(3) = size(z)
+
+    allocate(psi_imag(dims(1),dims(2),dims(3)))
+    allocate(psi_real(dims(1),dims(2),dims(3)))
+    allocate(readin_wav(dims(1),dims(2),dims(3)))
+
+    write(*,*) "initial wavefunction read from file"
+    ! open hdf5 API
+    call h5open_f(errors)
+
+    ! open wavefunction file
+    call h5fopen_f('psi_init.h5', H5F_ACC_RDONLY_F, file_id, errors)
+
+    ! open imaginary component dataset
+    call h5dopen_f(file_id, 'psi_imag', dset_id, errors)
+    f_ptr = C_LOC(psi_imag(1,1,1))
+    ! read in imaginary component
+    call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, f_ptr, errors)
+    call h5dclose_f(dset_id, errors)
+
+    ! open reak component dataset
+    call h5dopen_f(file_id, 'psi_real', dset_id, errors)
+    f_ptr = C_LOC(psi_real(1,1,1))
+    ! read in real component
+    call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, f_ptr, errors)
+    call h5dclose_f(dset_id, errors)
+
+    call h5fclose_f(file_id, errors)
+
+    ! close hdf5 API
+    call h5close_f(errors)
+
+    ! construct wavefunction from real and imaginary components
+    readin_wav = psi_real + cmplx(0.0,1.0)*psi_imag
+
+    deallocate(psi_imag)
+    deallocate(psi_real)
+  end function readin_wav
 end module init

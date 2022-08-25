@@ -129,8 +129,13 @@ program gp_lck
   call h5fclose_f(file_id, error)
   
   ! compute initial profile of wavefunction
-  psi = init_wav(x,y,z,init_type,gauss_sig)
-
+  if (init_type == 0) then
+    ! read in the initial wavefunction from a .h5 file
+    psi = readin_wav(x,y,z)
+  elseif (init_type /= 0) then
+    ! calculate the initial wavefunction
+    psi = init_wav(x,y,z,init_type,gauss_sig)
+  end if
   call renorm(psi,dx,dy,dz,Nlck)
   
   ! begin time-stepping
