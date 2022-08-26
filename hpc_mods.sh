@@ -1,5 +1,7 @@
 #! /bin/bash
 
+module purge
+
 module load Python/3.9.6-GCCcore-11.2.0
 echo "Python module loaded"
 module load HDF5/1.12.1-gompi-2021b
