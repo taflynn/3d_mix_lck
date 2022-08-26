@@ -135,8 +135,8 @@ program gp_lck
   elseif (init_type /= 0) then
     ! calculate the initial wavefunction
     psi = init_wav(x,y,z,init_type,gauss_sig)
+    call renorm(psi,dx,dy,dz,Nlck)
   end if
-  call renorm(psi,dx,dy,dz,Nlck)
   
   ! begin time-stepping
   if (im_t_steps > 0) then
@@ -150,8 +150,12 @@ program gp_lck
     
     ! initialise ssfm laplacian term and chemical potential
     dk2 = exp_lap(kx,ky,kz,dt)
-    mu = -1.0
-    
+    if (init_type == 0) then
+      mu = readin_chempot()
+    else
+      mu = -1.0
+    end if
+
     ! imaginary time function
     call ssfm(psi,dk2,im_t_steps,im_t_save,dt,dx,dy,dz,Nlck,mu,im_real)
   end if
@@ -166,7 +170,10 @@ program gp_lck
 
     ! initilise ssfm laplacian term and chemical potential
     dk2 = exp_lap(kx,ky,kz,dt)
-     
+    if (init_type == 0) then
+      mu = readin_chempot()
+    end if
+    
     ! real time function
     call ssfm(psi,dk2,re_t_steps,re_t_save,dt,dx,dy,dz,Nlck,mu,im_real)
   end if

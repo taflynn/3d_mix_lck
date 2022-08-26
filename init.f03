@@ -93,7 +93,7 @@ module init
     call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, f_ptr, errors)
     call h5dclose_f(dset_id, errors)
 
-    ! open reak component dataset
+    ! open real component dataset
     call h5dopen_f(file_id, 'psi_real', dset_id, errors)
     f_ptr = C_LOC(psi_real(1,1,1))
     ! read in real component
@@ -111,4 +111,36 @@ module init
     deallocate(psi_imag)
     deallocate(psi_real)
   end function readin_wav
+
+  function readin_chempot()
+    
+    double precision :: readin_chempot
+    ! Local variables 
+
+    integer :: errors
+    integer(HID_T) :: file_id, dset_id
+    integer(HSIZE_T), dimension(1) :: scal_dim=1
+
+    write(*,*) "initial chemical potential read from file"
+    ! open hdf5 API
+    call h5open_f(errors)
+
+    ! open wavefunction file
+    call h5fopen_f('psi_init.h5', H5F_ACC_RDONLY_F, file_id, errors)
+
+    ! open chemical potential dataset
+    call h5dopen_f(file_id, 'mu', dset_id, errors)
+    ! read in imaginary component
+    call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, readin_chempot, scal_dim, errors)
+    call h5dclose_f(dset_id, errors)
+
+    call h5fclose_f(file_id, errors)
+
+    ! close hdf5 API
+    call h5close_f(errors)
+    
+    write(*,*) "using mu:"
+    write(*,*) readin_chempot
+
+  end function readin_chempot
 end module init

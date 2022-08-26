@@ -37,6 +37,7 @@ module time
     integer(HID_T) :: file_id
     integer(HID_T) :: dset_id
     integer(HID_T) :: dspace_id
+    integer(HSIZE_T), dimension(1) :: scal_dim=(/0/)
     integer(HSIZE_T), dimension(3) :: dims
     character(len=19) :: filename_wav
 
@@ -113,6 +114,12 @@ module time
         end if
         ! create wavefunction output file
         call h5fcreate_f(filename_wav, H5F_ACC_TRUNC_F, file_id, h5_error)
+        ! save chemical potential
+        call h5screate_simple_f(0, scal_dim, dspace_id, h5_error)
+        call h5dcreate_f(file_id, 'mu', H5T_NATIVE_DOUBLE, dspace_id, dset_id, h5_error)
+        call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, mu, scal_dim, h5_error)
+        call h5dclose_f(dset_id, h5_error)
+        call h5sclose_f(dspace_id, h5_error)
         ! save real component of wavefunction
         call h5screate_simple_f(3, dims, dspace_id, h5_error)
         call h5dcreate_f(file_id, 'psi_real', H5T_NATIVE_DOUBLE, dspace_id, dset_id, h5_error)
