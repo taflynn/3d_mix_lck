@@ -25,6 +25,8 @@ module time
     integer :: l
     integer :: Nx, Ny, Nz, Nxyz
 
+    double complex :: t = 0.0
+
     type(C_PTR) :: plan_forw, plan_back
     
     complex(C_DOUBLE_COMPLEX), allocatable :: psi_k(:,:,:)
@@ -88,17 +90,17 @@ module time
       ! renormalise wavefunction (if in imaginary time)
       if (im_real == 0) then
         call renorm(psi,dx,dy,dz,Nlck)
-        !if (mod(l,t_save) == 0) then
-          ! FFT wavefunction to real space
-          call fftw_execute_dft(plan_forw,psi,psi_k)
-          psi_k = psi_k/sqrt(dble(Nxyz))
-          mu = chem_pot(psi,psi_k,dk2,plan_back,Nx,Ny,Nz,dt)
-        !end if
+        ! FFT wavefunction to real space
+        call fftw_execute_dft(plan_forw,psi,psi_k)
+        psi_k = psi_k/sqrt(dble(Nxyz))
+        mu = chem_pot(psi,psi_k,dk2,plan_back,Nx,Ny,Nz,dt)
       end if
+
+      t = t + dt
 
       ! data outputting
       if (mod(l,t_save) == 0) then
-        !
+        ! data writing to screen
         write(*,*) "Percentage Completed"
         write(*,*) 100*(dble(l)/dble(T_STEPS))
         write(*,*) "Central Density"
@@ -119,6 +121,14 @@ module time
         call h5dcreate_f(file_id, 'mu', H5T_NATIVE_DOUBLE, dspace_id, dset_id, h5_error)
         call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, mu, scal_dim, h5_error)
         call h5dclose_f(dset_id, h5_error)
+        ! current time step
+        call h5dcreate_f(file_id, 't', H5T_NATIVE_DOUBLE, dspace_id, dset_id, h5_error)
+        if (im_real == 0) then
+          call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, real(t), scal_dim, h5_error)
+        elseif (im_real == 1) then
+          call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, aimag(t), scal_dim, h5_error)
+        end if
+        call h5dclose_f(dset_id, h5_error)
         call h5sclose_f(dspace_id, h5_error)
         ! save real component of wavefunction
         call h5screate_simple_f(3, dims, dspace_id, h5_error)
@@ -132,6 +142,7 @@ module time
         call h5sclose_f(dspace_id, h5_error)
         call h5fclose_f(file_id, h5_error)
       end if
+
     end do
     call h5close_f(h5_error)
   end subroutine ssfm
@@ -194,7 +205,10 @@ module time
     ! transform kinetic energy term back into real space
     call fftw_execute_dft(plan_back,lap_psik,lap_psi)
     lap_psi = lap_psi/sqrt(dble(Nx*Ny*Nz))
-    
+   
+    deallocate(lap_psik)
+    deallocate(k2)
+
     ! compute chemical potential
     chem_pot = sum(-0.5*conjg(psi)*lap_psi - 3.0*abs(psi)**4 + 2.5*abs(psi)**5)/sum(abs(psi)**2)
   
