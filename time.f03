@@ -161,7 +161,9 @@ module time
     norm = sum(abs(psi(:,:,:))**2.0)*dx*dy*dz
     !$omp end parallel workshare
 
-    psi = psi*sqrt(Nlck/norm)
+    !$omp parallel workshare
+    psi(:,:,:) = psi(:,:,:)*sqrt(Nlck/norm)
+    !$omp end parallel workshare
 
   end subroutine renorm
 
@@ -201,7 +203,9 @@ module time
     
     ! transform kinetic energy term back into real space
     call fftw_execute_dft(plan_back,lap_psik,lap_psi)
-    lap_psi = lap_psi/dble(Nx*Ny*Nz)
+    !$omp parallel workshare
+    lap_psi(:,:,:) = lap_psi(:,:,:)/dble(Nx*Ny*Nz)
+    !$omp end parallel workshare
 
     deallocate(lap_psik)
 
