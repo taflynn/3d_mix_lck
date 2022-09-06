@@ -15,8 +15,9 @@ export OMP_NUM_THREADS=$ompthreads
 mkdir /nobackup/b6019832/$1
 cp config.json /nobackup/b6019832/$1
 cp ./gp_lck /nobackup/b6019832/$1
+cp psi_init.h5 /nobackup/b6019832/$1
 cd /nobackup/b6019832/$1
 
 ./gp_lck
 
-mv ./slurm-${SLURM_JOB_ID}.out /nobackup/b6019832/$1
+mv ~/3d_mix_lck/slurm-${SLURM_JOB_ID}.out /nobackup/b6019832/$1
