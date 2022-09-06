@@ -25,7 +25,7 @@ module rhs
     do k = 1, Nz
       do j = 1, Ny
         do i = 1, Nx
-          psi(i,j,k) = psi(i,j,k)*exp(-0.5*dt*(-3.0*abs(psi(i,j,k))**2 + 2.5*abs(psi(i,j,k))**3 - mu))
+          psi(i,j,k) = psi(i,j,k)*exp(-0.5*dt*(-3.0*abs(psi(i,j,k))**2.0 + 2.5*abs(psi(i,j,k))**3.0 - mu))
         end do
       end do
     end do

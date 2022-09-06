@@ -75,14 +75,15 @@ module time
       
       ! FFT wavefunction to momentum space
       call fftw_execute_dft(plan_forw,psi,psi_k)
-      psi_k = psi_k/sqrt(dble(Nxyz))
       
       ! kinetic energy step
       call T_rhs(psi_k,dk2,Nx,Ny,Nz)
       
       ! IFFT wavefunction to real space
       call fftw_execute_dft(plan_back,psi_k,psi)
-      psi = psi/sqrt(dble(Nxyz))
+      
+      ! renormalise from two successive transforms
+      psi = psi/dble(Nxyz)
 
       ! second half-step (non-linear terms)
       call V_rhs(psi,mu,dt,Nx,Ny,Nz)
@@ -92,7 +93,6 @@ module time
         call renorm(psi,dx,dy,dz,Nlck)
         ! FFT wavefunction to real space
         call fftw_execute_dft(plan_forw,psi,psi_k)
-        psi_k = psi_k/sqrt(dble(Nxyz))
         mu = chem_pot(psi,psi_k,dk2,plan_back,Nx,Ny,Nz,dt)
       end if
 
@@ -156,10 +156,13 @@ module time
 
     ! local variables
     double precision :: norm
-    
-    norm = sum(abs(psi)**2)*dx*dy*dz
+
+    !$omp parallel workshare
+    norm = sum(abs(psi(:,:,:))**2.0)*dx*dy*dz
+    !$omp end parallel workshare
 
     psi = psi*sqrt(Nlck/norm)
+
   end subroutine renorm
 
   function chem_pot(psi,psi_k,dk2,plan_back,Nx,Ny,Nz,dt)
@@ -180,23 +183,17 @@ module time
    
     double complex :: dt
 
-    double precision, allocatable :: k2(:,:,:)
-
     complex(C_DOUBLE_COMPLEX), allocatable :: lap_psi(:,:,:), lap_psik(:,:,:)
 
     allocate(lap_psi(Nx,Ny,Nz))
     allocate(lap_psik(Nx,Ny,Nz))
-    allocate(k2(Nx,Ny,Nz))
-
-    ! define the laplacian operator from the exponential laplacian used in the ssfm method
-    k2 = (2.0/dt)*log(dk2)
 
     ! compute second derivative of wavefunction in momentum space
     !$omp parallel do collapse(3)   
     do k = 1, Nz
       do j = 1, Ny
         do i = 1, Nx
-          lap_psik(i,j,k) = k2(i,j,k)*psi_k(i,j,k)
+          lap_psik(i,j,k) = (2.0/dt)*log(dk2(i,j,k))*psi_k(i,j,k)
         end do
       end do
     end do
@@ -204,14 +201,17 @@ module time
     
     ! transform kinetic energy term back into real space
     call fftw_execute_dft(plan_back,lap_psik,lap_psi)
-    lap_psi = lap_psi/sqrt(dble(Nx*Ny*Nz))
-   
+    lap_psi = lap_psi/dble(Nx*Ny*Nz)
+
     deallocate(lap_psik)
-    deallocate(k2)
 
     ! compute chemical potential
-    chem_pot = sum(-0.5*conjg(psi)*lap_psi - 3.0*abs(psi)**4 + 2.5*abs(psi)**5)/sum(abs(psi)**2)
-  
+    !$omp parallel workshare
+    chem_pot = sum(-0.5*conjg(psi(:,:,:))*lap_psi(:,:,:) &
+                   -3.0*abs(psi(:,:,:))**4.0 &
+                   +2.5*abs(psi(:,:,:))**5.0)/sum(abs(psi(:,:,:))**2.0)
+    !$omp end parallel workshare
+
   end function chem_pot
 
 end module time
