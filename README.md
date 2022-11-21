@@ -1,5 +1,5 @@
 # 3d_mix_lck
-**WARNING: CODE NOT FUNCTIONING, STILL IN DEVELOPMENT**
+**CODE STILL IN DEVELOPMENT**
 ## Overview 
 
 **Solver of the density-locked extend Gross-Pitaevskii (GP) equation in three-dimensions (3D)**
@@ -26,7 +26,8 @@ The `grid` module contains three functions for setting up the grids and differen
 
 ### `init.f03`
 The `init` module (currently) contains one function for initialising the imaginary time-stepping (there is an aim to extend this to read in a `.h5` file as the initial wavefunction for real time):
-1) `init_wa(x,y,z,init_type,gauss_sig)` - The initial wavefunction form (`x`, `y` and `z` are the three real space arrays, `init_type` allows for the selection of: a Gaussian initial density profile (`init_type = 1`); or a Super_Gaussian initial density profile (`init_type = 2`))
+1) `init_wav(x,y,z,init_type,gauss_sig)` - The initial wavefunction form (`x`, `y` and `z` are the three real space arrays, `init_type` allows for the selection of: a Gaussian initial density profile (`init_type = 1`); or a Super_Gaussian initial density profile (`init_type = 2`))
+2) `readin_wav(x,y,z)` - The initial wavefunction form loaded via an .h5, this can be loaded for both real and imaginary time
 
 ### `time.f03`
 The `time` module contains two subroutines and one function for time-stepping the right-hand-side of the GP equation:
@@ -47,11 +48,12 @@ The `rhs` module contains two subroutines:
 ## Compiling and Running
 Once the requisite libraries are loaded and located on the system, the next step is to setup up the `config.json` (the naming convention the code expects) file from the `default.config.json` file. 
 
-With the codes ready, the paths to the necessary libraries should be added to the associated Makefile (`makefile_pc` for local machines and `makefile_hpc` for remote clusters). Then copy the desired Makefile to `makefile` and run `make` to compile. **NOTE!** These Makefiles are highly simplified and will be formalised soon. If running locally then the code can be ran with the `./gplck` command, whilst for running on a cluster, an example SLURM job script is given in `3d_drop.sh`.
+With the codes ready, the paths to the necessary libraries should be added to the associated Makefile (`makefile_pc` for local machines and `makefile_hpc` for remote clusters). Then copy the desired Makefile to `makefile` and run `make` to compile. If running locally then the code can be ran with the `./gplck` command, whilst for running on a cluster, an example SLURM job script is given in either `drop_lck.sh` or `h5_lck.sh`:
+* `drop_lck.sh` - this create a separate directory for the simulation data to be stored
+* `h5_lck.sh` - as above but sets up the reading in of the `psi_init.h5` initial wavefunction file
 
 ## Future...
 Extension work will be undertaken on this code to include:
 1) Processing scripts
 2) Experimental to theoretical scripts to setup the `config.json` input file from experimental parameters
-3) Ability to read in ground state wavefunction from `*.h5` file to propagate in real time
 
