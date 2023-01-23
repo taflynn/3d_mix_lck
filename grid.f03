@@ -95,6 +95,6 @@ module grid
         end do
       end do
     end do
-
+   
   end function exp_lap
 end module grid
